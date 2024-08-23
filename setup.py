@@ -58,8 +58,8 @@ setup(
         "tabulate",  # dependency for markdown rendering in pandas
         "tokenizers",
         "torch",
-        "tiktoken==0.6.0",  # added for llama 3
-        "transformers==4.40.0",  # pinned at llama 3
+        "tiktoken>=0.6.0",  # added for llama 3
+        "transformers>=4.40.0",  # pinned at llama 3
         "trl>=0.8.2",  # fixed transformers import error
     ],
     extras_require={
