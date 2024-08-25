@@ -24,6 +24,7 @@ from .utils import (
     prepare_dialogue,
     prepare_dialogue_from_tokenizer,
     save_to_hub,
+    save_to_hub2,
     torch_dtype_mapping,
 )
 

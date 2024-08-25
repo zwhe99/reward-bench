@@ -142,6 +142,66 @@ def save_to_hub(
     else:
         return None
 
+def save_to_hub2(
+    results_dict: Union[Dict, List],
+    model_name: str,
+    scores_path: str,
+    target_path: str,
+    debug: bool = False,
+    local_only: bool = False,
+    save_metrics_for_beaker: bool = False,
+):
+    """
+    Utility for saving results in dict to the hub in programatic organization.
+
+    Args:
+        results_dict: dictionary of results to save.
+        model_name: name of the model (including organization).
+        target_path: path to save the results in the hub. Usually set in script (e.g. eval-set/, eval-set-scores/).
+        debug: if True, save to debug repo on HF.
+        local_only: if True, do not save to HF (for most non-AI2 users).
+        save_metrics_for_beaker: if True, save metrics for AI2 beaker visualization.
+
+    Returns:
+        scores_url: URL to the saved scores (optional).
+    """
+    if save_metrics_for_beaker:
+        # ai2 internal visualization, not needed externally, global path intentional.
+        dirname = os.path.dirname("/output/metrics.json")
+        os.makedirs(dirname, exist_ok=True)  # redundant in Beaker code
+        with open("/output/metrics.json", "w+") as f:  # save format for AI2 beaker to show results
+            json.dump(results_dict, f)
+
+    dirname = os.path.dirname(scores_path)
+    os.makedirs(dirname, exist_ok=True)
+
+    # remove old data
+    if os.path.isfile(scores_path):
+        os.remove(scores_path)
+
+    with open(scores_path, "w") as f:
+        if isinstance(results_dict, Dict):
+            dumped = json.dumps(results_dict, indent=4, sort_keys=True)  # nol removed , default=str
+            f.write(dumped)
+        # else, dump each row in list
+        else:
+            for record in results_dict:
+                dumped = json.dumps(record, indent=4, sort_keys=True) + "\n"
+                f.write(dumped)
+
+    if not local_only:
+        scores_url = api.upload_file(
+            path_or_fileobj=scores_path,
+            path_in_repo=target_path + f"{model_name}.json",
+            repo_id=EVAL_REPO if not debug else "ai2-adapt-dev/herm-debug",  # push to correct results repo
+            repo_type="dataset",
+            commit_message=f"Add chosen-rejected text with scores for  model {model_name}",
+        )
+        return scores_url
+    else:
+        return None
+
+
 
 def map_conversations_testsets(example):
     prompt = example["prompt"]
